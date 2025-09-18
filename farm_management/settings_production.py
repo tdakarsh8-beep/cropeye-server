@@ -208,12 +208,12 @@ LEAFLET_CONFIG = {
     'ATTRIBUTION': '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }
 
-# FastAPI Services URLs
-EVENTS_API_URL = os.environ.get('EVENTS_API_URL', 'http://localhost:9000')
-SOIL_API_URL = os.environ.get('SOIL_API_URL', 'http://localhost:8003')
-ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'http://localhost:7030')
-ET_API_URL = os.environ.get('ET_API_URL', 'http://localhost:8009')
-FIELD_API_URL = os.environ.get('FIELD_API_URL', 'http://localhost:7002')
+# FastAPI Services URLs (Update these with your deployed service URLs)
+EVENTS_API_URL = os.environ.get('EVENTS_API_URL', 'https://your-events-service.onrender.com')
+SOIL_API_URL = os.environ.get('SOIL_API_URL', 'https://your-soil-service.onrender.com')
+ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'https://your-admin-service.onrender.com')
+ET_API_URL = os.environ.get('ET_API_URL', 'https://your-et-service.onrender.com')
+FIELD_API_URL = os.environ.get('FIELD_API_URL', 'https://your-field-service.onrender.com')
 
 # WhatsApp OTP Configuration (Twilio)
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')

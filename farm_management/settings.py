@@ -219,8 +219,8 @@ LEAFLET_CONFIG = {
 
 # FastAPI Services URLs
 EVENTS_API_URL = os.environ.get('EVENTS_API_URL', 'http://localhost:9000')
-SOIL_API_URL = os.environ.get('SOIL_API_URL', 'http://localhost:8003')  # main.py
-ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'http://localhost:7030')  # Admin.py
+SOIL_API_URL = os.environ.get('SOIL_API_URL', 'http://localhost:8002')  # soil.py
+ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'http://localhost:7031')  # Admin.py
 ET_API_URL = os.environ.get('ET_API_URL', 'http://localhost:8009')    # ET.py
 FIELD_API_URL = os.environ.get('FIELD_API_URL', 'http://localhost:7002') # field.py
 

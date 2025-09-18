@@ -2,9 +2,13 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import JsonResponse
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from rest_framework import permissions
+
+def health_check(request):
+    return JsonResponse({"status": "healthy", "service": "farm-management-api"})
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -21,6 +25,9 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    
+    # Health check endpoint
+    path('api/health/', health_check, name='health-check'),
     
     # API endpoints
     path('api/', include('users.urls')),
