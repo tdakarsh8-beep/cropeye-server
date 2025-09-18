@@ -253,8 +253,6 @@ Thumbs.db
 .railway/
 
 # Docker
-.dockerignore
-Dockerfile
 docker-compose.yml
 docker-compose.override.yml
 
@@ -468,10 +466,6 @@ Thumbs.db
 
 # Deployment
 .railway/
-.dockerignore
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
 
 # SSL certificates
 *.pem
