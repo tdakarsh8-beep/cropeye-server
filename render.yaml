@@ -18,6 +18,7 @@ services:
     name: farm-management-redis
     plan: starter
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
   # Django Web Application
   - type: web
@@ -25,8 +26,6 @@ services:
     env: docker
     plan: starter
     dockerfilePath: ./Dockerfile
-    buildCommand: ""
-    startCommand: "gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --access-logfile - --error-logfile - farm_management.wsgi:application"
     envVars:
       - key: DEBUG
         value: False
@@ -35,20 +34,9 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: farm_management.settings_production
       - key: DB_NAME
-        fromService:
-          type: pserv
-          name: farm-management-db
-          property: database
+        value: farm_management
       - key: DB_USER
-        fromService:
-          type: pserv
-          name: farm-management-db
-          property: user
-      - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: farm-management-db
-          property: password
+        value: postgres
       - key: DB_HOST
         fromService:
           type: pserv
@@ -59,6 +47,11 @@ services:
           type: pserv
           name: farm-management-db
           property: port
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: farm-management-db
+          property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis
