@@ -1,11 +1,10 @@
-services:
+databases:
   # PostgreSQL Database
-  - type: pg
-    name: farm-management-db
+  - name: farm-management-db
     plan: starter
-    databaseName: farm_management
-    user: postgres
+    region: oregon
 
+services:
   # Redis Cache
   - type: redis
     name: farm-management-redis
@@ -27,28 +26,23 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: farm_management.settings_production
       - key: DB_NAME
-        fromService:
-          type: pg
+        fromDatabase:
           name: farm-management-db
           property: database
       - key: DB_USER
-        fromService:
-          type: pg
+        fromDatabase:
           name: farm-management-db
           property: user
       - key: DB_PASSWORD
-        fromService:
-          type: pg
+        fromDatabase:
           name: farm-management-db
           property: password
       - key: DB_HOST
-        fromService:
-          type: pg
+        fromDatabase:
           name: farm-management-db
           property: host
       - key: DB_PORT
-        fromService:
-          type: pg
+        fromDatabase:
           name: farm-management-db
           property: port
       - key: REDIS_URL
