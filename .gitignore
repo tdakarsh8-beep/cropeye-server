@@ -101,6 +101,7 @@ celerybeat.pid
 .env.production
 .env.staging
 .env.save
+.env.local.backup
 .venv
 env/
 venv/
