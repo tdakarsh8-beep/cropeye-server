@@ -1,17 +1,10 @@
 services:
   # PostgreSQL Database
-  - type: pserv
+  - type: pg
     name: farm-management-db
-    env: docker
     plan: starter
-    dockerfilePath: ./Dockerfile.db
-    envVars:
-      - key: POSTGRES_DB
-        value: farm_management
-      - key: POSTGRES_USER
-        value: postgres
-      - key: POSTGRES_PASSWORD
-        generateValue: true
+    databaseName: farm_management
+    user: postgres
 
   # Redis Cache
   - type: redis
@@ -34,24 +27,30 @@ services:
       - key: DJANGO_SETTINGS_MODULE
         value: farm_management.settings_production
       - key: DB_NAME
-        value: farm_management
+        fromService:
+          type: pg
+          name: farm-management-db
+          property: database
       - key: DB_USER
-        value: postgres
+        fromService:
+          type: pg
+          name: farm-management-db
+          property: user
+      - key: DB_PASSWORD
+        fromService:
+          type: pg
+          name: farm-management-db
+          property: password
       - key: DB_HOST
         fromService:
-          type: pserv
+          type: pg
           name: farm-management-db
           property: host
       - key: DB_PORT
         fromService:
-          type: pserv
+          type: pg
           name: farm-management-db
           property: port
-      - key: DB_PASSWORD
-        fromService:
-          type: pserv
-          name: farm-management-db
-          property: connectionString
       - key: REDIS_URL
         fromService:
           type: redis

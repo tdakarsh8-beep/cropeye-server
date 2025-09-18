@@ -79,35 +79,16 @@ TEMPLATES = [
 WSGI_APPLICATION = 'farm_management.wsgi.application'
 
 # Database
-import dj_database_url
-
-# Try to parse the database URL if it's a connection string
-db_url = os.environ.get('DB_PASSWORD')
-if db_url and db_url.startswith('postgres://'):
-    # Parse the connection string
-    db_config = dj_database_url.parse(db_url)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': db_config['NAME'],
-            'USER': db_config['USER'],
-            'PASSWORD': db_config['PASSWORD'],
-            'HOST': db_config['HOST'],
-            'PORT': db_config['PORT'],
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': os.environ.get('DB_NAME', 'farm_management'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
-else:
-    # Fallback to individual environment variables
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.contrib.gis.db.backends.postgis',
-            'NAME': os.environ.get('DB_NAME', 'farm_management'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'postgres'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5432'),
-        }
-    }
+}
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
