@@ -144,6 +144,8 @@ static/
 .env.local
 .env.production
 .env.staging
+.env.render
+.env.render.local
 secrets.py
 local_settings.py
 production_settings.py
