@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Management System</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1> Smartcrop - Farm Management System</h1>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Dashboard</a></li>
+                    <li><a href="#users">Users</a></li>
+                    <li><a href="#tasks">Tasks</a></li>
+                    <li><a href="#equipment">Equipment</a></li>
+                    <li><a href="#bookings">Bookings</a></li>
+                    <li><a href="#farms">Farms</a></li>
+                </ul>
+            </nav>
+            <div class="user-info">
+                <span id="username">User</span>
+                <button id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <!-- Login Form (Initially Visible) -->
+            <section id="login-section">
+                <div class="form-container">
+                    <h2>Login with OTP</h2>
+                    <div id="email-form">
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" id="username-input" placeholder="Enter your username">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" id="password-input" placeholder="Enter your password">
+                        </div>
+                        <button id="send-otp-btn" class="btn primary-btn">Send OTP</button>
+                    </div>
+                    <div id="otp-form" style="display: none;">
+                        <div class="form-group">
+                            <label for="otp">OTP Code</label>
+                            <input type="text" id="otp" placeholder="Enter OTP sent to your registered email" maxlength="6">
+                        </div>
+                        <div class="btn-group">
+                            <button id="back-btn" class="btn secondary-btn">Back</button>
+                            <button id="verify-otp-btn" class="btn primary-btn">Verify OTP</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard (Initially Hidden) -->
+            <section id="dashboard-section" class="hidden">
+                <h2>Dashboard</h2>
+                <p>Welcome back, <span id="user-greeting">User</span>!</p>
+                
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>Users</h3>
+                        <p class="stat-number">12</p>
+                        <a href="#users" class="btn text-btn">View All</a>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Tasks</h3>
+                        <p class="stat-number">24</p>
+                        <p class="stat-detail">8 pending</p>
+                        <a href="#tasks" class="btn text-btn">View All</a>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Equipment</h3>
+                        <p class="stat-number">18</p>
+                        <p class="stat-detail">15 available</p>
+                        <a href="#equipment" class="btn text-btn">View All</a>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Bookings</h3>
+                        <p class="stat-number">9</p>
+                        <p class="stat-detail">3 upcoming</p>
+                        <a href="#bookings" class="btn text-btn">View All</a>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Farms</h3>
+                        <p class="stat-number">5</p>
+                        <p class="stat-detail">120 hectares total</p>
+                        <a href="#farms" class="btn text-btn">Manage Farms</a>
+                    </div>
+                </div>
+                
+                <div class="dashboard-widgets">
+                    <div class="widget">
+                        <h3>Recent Tasks</h3>
+                        <ul class="list">
+                            <li class="list-item">
+                                <span class="item-title">Harvest Field A</span>
+                                <span class="tag status-pending">Pending</span>
+                                <span class="tag priority-high">High</span>
+                            </li>
+                            <li class="list-item">
+                                <span class="item-title">Maintenance Check</span>
+                                <span class="tag status-inprogress">In Progress</span>
+                                <span class="tag priority-medium">Medium</span>
+                            </li>
+                            <li class="list-item">
+                                <span class="item-title">Purchase Supplies</span>
+                                <span class="tag status-completed">Completed</span>
+                                <span class="tag priority-low">Low</span>
+                            </li>
+                        </ul>
+                        <button id="create-task-btn" class="btn primary-btn">Create Task</button>
+                    </div>
+                    
+                    <div class="widget">
+                        <h3>Upcoming Bookings</h3>
+                        <ul class="list">
+                            <li class="list-item">
+                                <span class="item-title">Team Meeting</span>
+                                <span class="item-subtitle">April 1, 2023 - 10:00 AM</span>
+                            </li>
+                            <li class="list-item">
+                                <span class="item-title">Field Inspection</span>
+                                <span class="item-subtitle">April 3, 2023 - 2:00 PM</span>
+                            </li>
+                            <li class="list-item">
+                                <span class="item-title">Equipment Training</span>
+                                <span class="item-subtitle">April 5, 2023 - 9:00 AM</span>
+                            </li>
+                        </ul>
+                        <button id="create-booking-btn" class="btn primary-btn">Create Booking</button>
+                    </div>
+                    
+                    <div class="widget">
+                        <h3>Equipment Maintenance</h3>
+                        <ul class="list">
+                            <li class="list-item">
+                                <span class="item-title">Tractor #3</span>
+                                <span class="tag status-maintenance">Maintenance</span>
+                            </li>
+                            <li class="list-item">
+                                <span class="item-title">Irrigation System</span>
+                                <span class="tag status-available">Available</span>
+                            </li>
+                            <li class="list-item">
+                                <span class="item-title">Harvester</span>
+                                <span class="tag status-inuse">In Use</span>
+                            </li>
+                        </ul>
+                        <button id="manage-equipment-btn" class="btn primary-btn">Manage Equipment</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tasks Section (Initially Hidden) -->
+            <section id="tasks-section" class="hidden">
+                <div class="section-header">
+                    <h2>Tasks</h2>
+                    <button id="add-task-btn" class="btn primary-btn">Add Task</button>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="task-search" placeholder="Search tasks...">
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Assigned To</th>
+                            <th>Due Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Harvest Field A</td>
+                            <td><span class="tag status-pending">Pending</span></td>
+                            <td><span class="tag priority-high">High</span></td>
+                            <td>John Doe</td>
+                            <td>Apr 5, 2023</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Maintenance Check</td>
+                            <td><span class="tag status-inprogress">In Progress</span></td>
+                            <td><span class="tag priority-medium">Medium</span></td>
+                            <td>Jane Smith</td>
+                            <td>Apr 7, 2023</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Purchase Supplies</td>
+                            <td><span class="tag status-completed">Completed</span></td>
+                            <td><span class="tag priority-low">Low</span></td>
+                            <td>Mike Johnson</td>
+                            <td>Apr 2, 2023</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Users Section (Initially Hidden) -->
+            <section id="users-section" class="hidden">
+                <div class="section-header">
+                    <h2>Users</h2>
+                    <button id="add-user-btn" class="btn primary-btn">Add User</button>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="user-search" placeholder="Search users...">
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>johndoe</td>
+                            <td>john@example.com</td>
+                            <td>Admin</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>janesmith</td>
+                            <td>jane@example.com</td>
+                            <td>Manager</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>mikejohnson</td>
+                            <td>mike@example.com</td>
+                            <td>Worker</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Equipment Section (Initially Hidden) -->
+            <section id="equipment-section" class="hidden">
+                <div class="section-header">
+                    <h2>Equipment</h2>
+                    <button id="add-equipment-btn" class="btn primary-btn">Add Equipment</button>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="equipment-search" placeholder="Search equipment...">
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Location</th>
+                            <th>Assigned To</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Tractor #3</td>
+                            <td><span class="tag status-maintenance">Maintenance</span></td>
+                            <td>Barn A</td>
+                            <td>-</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Irrigation System</td>
+                            <td><span class="tag status-available">Available</span></td>
+                            <td>Field B</td>
+                            <td>-</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Harvester</td>
+                            <td><span class="tag status-inuse">In Use</span></td>
+                            <td>Field A</td>
+                            <td>John Doe</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Bookings Section (Initially Hidden) -->
+            <section id="bookings-section" class="hidden">
+                <div class="section-header">
+                    <h2>Bookings</h2>
+                    <button id="add-booking-btn" class="btn primary-btn">Add Booking</button>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="booking-search" placeholder="Search bookings...">
+                </div>
+                
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Team Meeting</td>
+                            <td>Meeting</td>
+                            <td><span class="tag status-pending">Pending</span></td>
+                            <td>Apr 1, 2023 10:00 AM</td>
+                            <td>Apr 1, 2023 11:00 AM</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Field Inspection</td>
+                            <td>Field Work</td>
+                            <td><span class="tag status-approved">Approved</span></td>
+                            <td>Apr 3, 2023 2:00 PM</td>
+                            <td>Apr 3, 2023 4:00 PM</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Equipment Training</td>
+                            <td>Training</td>
+                            <td><span class="tag status-approved">Approved</span></td>
+                            <td>Apr 5, 2023 9:00 AM</td>
+                            <td>Apr 5, 2023 12:00 PM</td>
+                            <td>
+                                <button class="icon-btn edit-btn">Edit</button>
+                                <button class="icon-btn delete-btn">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; planeteye smartcrop</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html> 
