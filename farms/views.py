@@ -235,6 +235,10 @@ class FarmViewSet(viewsets.ModelViewSet):
                             'crop_type': farm.crop_type.crop_type if farm.crop_type else None,
                             'plantation_type': farm.crop_type.get_plantation_type_display() if farm.crop_type and farm.crop_type.plantation_type else None,
                             'planting_method': farm.crop_type.get_planting_method_display() if farm.crop_type and farm.crop_type.planting_method else None,
+                            'plantation_date': farm.plantation_date.isoformat() if farm.plantation_date else None,
+                            'spacing_a': float(farm.spacing_a) if farm.spacing_a else None,
+                            'spacing_b': float(farm.spacing_b) if farm.spacing_b else None,
+                            'plants_in_field': farm.plants_in_field,
                             'created_at': farm.created_at.isoformat() if farm.created_at else None,
                             'irrigations': irrigation_details,
                             'irrigations_count': len(irrigation_details)
