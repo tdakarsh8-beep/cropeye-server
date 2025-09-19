@@ -220,6 +220,8 @@ model/
 *.sh
 !deploy.sh
 !start.sh
+!fix_migrations.py
+!create_initial_migration.py
 
 # Locust testing files
 locustfile.py
