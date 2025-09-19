@@ -219,6 +219,7 @@ model/
 # Shell scripts
 *.sh
 !deploy.sh
+!start.sh
 
 # Locust testing files
 locustfile.py

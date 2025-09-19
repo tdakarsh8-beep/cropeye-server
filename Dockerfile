@@ -39,6 +39,9 @@ COPY . /app/
 # Create directories for media, static files, and logs
 RUN mkdir -p /app/media /app/staticfiles /app/logs
 
+# Make startup script executable
+RUN chmod +x /app/start.sh
+
 # Create a non-root user
 RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
@@ -52,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health/ || exit 1
 
 # Run the application
-CMD ["sh", "-c", "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --access-logfile - --error-logfile - farm_management.wsgi:application"]
+CMD ["./start.sh"]
