@@ -223,6 +223,7 @@ model/
 !fix_migrations.py
 !create_initial_migration.py
 !fix_users_migration.py
+!create_database_schema.py
 
 # Locust testing files
 locustfile.py
