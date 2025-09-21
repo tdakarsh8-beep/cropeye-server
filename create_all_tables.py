@@ -148,7 +148,7 @@ def create_all_tables_comprehensive():
                 profile_picture VARCHAR(100),
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-                role_id INTEGER REFERENCES users_role(id),
+                role INTEGER REFERENCES users_role(id),
                 created_by_id INTEGER REFERENCES users_user(id)
             );
         """)
