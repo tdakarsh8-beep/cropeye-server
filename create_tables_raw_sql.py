@@ -112,20 +112,22 @@ def create_tables_with_raw_sql():
                 is_staff BOOLEAN NOT NULL DEFAULT FALSE,
                 is_active BOOLEAN NOT NULL DEFAULT TRUE,
                 date_joined TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-                phone_number VARCHAR(15),
-                address TEXT,
-                village VARCHAR(100),
-                district VARCHAR(100),
-                state VARCHAR(100),
-                pin_code VARCHAR(10),
+                phone_number VARCHAR(15) DEFAULT '',
+                otp VARCHAR(6),
+                otp_created_at TIMESTAMP WITH TIME ZONE,
+                otp_delivery_method VARCHAR(20),
+                password_reset_token VARCHAR(100),
+                password_reset_token_created_at TIMESTAMP WITH TIME ZONE,
+                address TEXT DEFAULT '',
+                village VARCHAR(100) DEFAULT '',
+                state VARCHAR(100) DEFAULT '',
+                district VARCHAR(100) DEFAULT '',
+                taluka VARCHAR(100) DEFAULT '',
+                profile_picture VARCHAR(100),
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
                 role_id INTEGER,
-                created_by_id INTEGER,
-                whatsapp_otp VARCHAR(6),
-                whatsapp_otp_created_at TIMESTAMP WITH TIME ZONE,
-                email_otp VARCHAR(6),
-                email_otp_created_at TIMESTAMP WITH TIME ZONE,
-                password_reset_token VARCHAR(255),
-                password_reset_token_created_at TIMESTAMP WITH TIME ZONE
+                created_by_id INTEGER
             );
         """)
         
@@ -248,6 +250,112 @@ def create_tables_with_raw_sql():
             );
         """)
         
+        # Create additional tables for other apps
+        print("📊 Creating additional app tables...")
+        
+        # Create farms_irrigationtype table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS farms_irrigationtype (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(20) UNIQUE NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+        """)
+        
+        # Create farms_farmirrigation table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS farms_farmirrigation (
+                id SERIAL PRIMARY KEY,
+                status VARCHAR(20) NOT NULL DEFAULT 'active',
+                motor_horsepower DECIMAL(5,2),
+                pipe_width_inches DECIMAL(5,2),
+                flow_rate_lph DECIMAL(10,2),
+                plants_per_acre INTEGER,
+                emitters_count INTEGER,
+                distance_motor_to_plot_m DECIMAL(10,2),
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                farm_id INTEGER NOT NULL,
+                irrigation_type_id INTEGER
+            );
+        """)
+        
+        # Create other essential tables
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS inventory_inventoryitem (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(200) NOT NULL,
+                description TEXT,
+                quantity DECIMAL(10,2) NOT NULL DEFAULT 0,
+                unit VARCHAR(50),
+                price_per_unit DECIMAL(10,2),
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                created_by_id INTEGER
+            );
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS equipment_equipment (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(200) NOT NULL,
+                equipment_type VARCHAR(100),
+                description TEXT,
+                purchase_date DATE,
+                price DECIMAL(10,2),
+                status VARCHAR(20) DEFAULT 'available',
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                owner_id INTEGER
+            );
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS tasks_task (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                description TEXT,
+                status VARCHAR(20) DEFAULT 'pending',
+                priority VARCHAR(20) DEFAULT 'medium',
+                due_date DATE,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                assigned_to_id INTEGER,
+                created_by_id INTEGER,
+                farm_id INTEGER
+            );
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS bookings_booking (
+                id SERIAL PRIMARY KEY,
+                booking_type VARCHAR(50) NOT NULL,
+                status VARCHAR(20) DEFAULT 'pending',
+                booking_date DATE NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                user_id INTEGER NOT NULL,
+                equipment_id INTEGER
+            );
+        """)
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS vendors_vendor (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(200) NOT NULL,
+                contact_person VARCHAR(100),
+                phone VARCHAR(15),
+                email VARCHAR(254),
+                address TEXT,
+                vendor_type VARCHAR(50),
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                created_by_id INTEGER
+            );
+        """)
+        
         # Commit all changes
         conn.commit()
         print("✅ All core tables created successfully!")
@@ -285,6 +393,11 @@ def create_tables_with_raw_sql():
             ('farms', '0005_remove_irrigation_dates'),
             ('farms', '0006_add_spacing_fields'),
             ('farms', '0007_farm_plantation_date'),
+            ('inventory', '0001_initial'),
+            ('equipment', '0001_initial'),
+            ('tasks', '0001_initial'),
+            ('bookings', '0001_initial'),
+            ('vendors', '0001_initial'),
         ]
         
         for app, migration in migrations_to_record:

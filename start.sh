@@ -10,21 +10,24 @@ echo "⏳ Waiting for database connection..."
 # Skip Django check to avoid migration loading issues
 # python manage.py check --database default --deploy
 
-# Create database tables using raw SQL (completely bypasses Django migrations)
-echo "📊 Creating database tables with raw SQL..."
-python create_tables_raw_sql.py || {
-    echo "❌ Raw SQL creation failed, trying Django approaches..."
-    python create_database_schema.py || {
-        echo "❌ Direct schema creation failed, trying migration approaches..."
-        python fix_users_migration.py || {
-            echo "❌ Users migration fix failed, trying other approaches..."
-            python create_initial_migration.py || {
-                echo "❌ Initial migration creation failed, trying fallback..."
-                python fix_migrations.py || {
-                    echo "❌ Migration fix script failed, trying manual approach..."
-                    python manage.py migrate --fake-initial --noinput || {
-                        echo "❌ All migration attempts failed!"
-                        exit 1
+# Create ALL database tables comprehensively (completely bypasses Django migrations)
+echo "📊 Creating ALL database tables comprehensively..."
+python create_all_tables.py || {
+    echo "❌ Comprehensive table creation failed, trying simpler approach..."
+    python create_tables_raw_sql.py || {
+        echo "❌ Raw SQL creation failed, trying Django approaches..."
+        python create_database_schema.py || {
+            echo "❌ Direct schema creation failed, trying migration approaches..."
+            python fix_users_migration.py || {
+                echo "❌ Users migration fix failed, trying other approaches..."
+                python create_initial_migration.py || {
+                    echo "❌ Initial migration creation failed, trying fallback..."
+                    python fix_migrations.py || {
+                        echo "❌ Migration fix script failed, trying manual approach..."
+                        python manage.py migrate --fake-initial --noinput || {
+                            echo "❌ All migration attempts failed!"
+                            exit 1
+                        }
                     }
                 }
             }
