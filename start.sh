@@ -11,13 +11,16 @@ python manage.py check --database default --deploy
 
 # Run migrations with retry logic
 echo "📊 Running database migrations..."
-python create_initial_migration.py || {
-    echo "❌ Initial migration creation failed, trying fallback..."
-    python fix_migrations.py || {
-        echo "❌ Migration fix script failed, trying manual approach..."
-        python manage.py migrate --fake-initial --noinput || {
-            echo "❌ All migration attempts failed!"
-            exit 1
+python fix_users_migration.py || {
+    echo "❌ Users migration fix failed, trying other approaches..."
+    python create_initial_migration.py || {
+        echo "❌ Initial migration creation failed, trying fallback..."
+        python fix_migrations.py || {
+            echo "❌ Migration fix script failed, trying manual approach..."
+            python manage.py migrate --fake-initial --noinput || {
+                echo "❌ All migration attempts failed!"
+                exit 1
+            }
         }
     }
 }
