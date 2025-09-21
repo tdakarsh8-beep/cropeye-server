@@ -30,7 +30,9 @@ Fill in these settings:
 | **Plan** | `Free` or `Starter` |
 
 ### Step 4: Add Environment Variables
-Copy and paste these environment variables (from the output above):
+**📁 IMPORTANT**: Open the `.env.render` file on your local machine and copy ALL the contents.
+
+Then paste them into Render's environment variables section:
 
 ```env
 DEBUG=False

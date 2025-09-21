@@ -80,7 +80,7 @@ def create_initial_migration_state():
                 ('tasks', '0001_initial'),
                 ('bookings', '0001_initial'),
                 ('vendors', '0001_initial'),
-                ('chatbotapi', '0001_initial'),
+                # ('chatbotapi', '0001_initial'),  # Removed chatbot app
             ]
             
             all_migrations = core_migrations + app_migrations

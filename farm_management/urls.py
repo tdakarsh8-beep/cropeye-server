@@ -37,7 +37,7 @@ urlpatterns = [
     path('api/', include('inventory.urls')),
     path('api/', include('vendors.urls')),
     path('api/', include('farms.urls')),
-    path('api/', include('chatbotapi.urls')),
+    # path('api/', include('chatbotapi.urls')),  # Removed chatbot functionality
     path('api/', include('tasks.urls')),
 
     # API Documentation
