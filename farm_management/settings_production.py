@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'inventory',
     'vendors',
     'farms',
-    'chatbotapi',
+    # 'chatbotapi',  # Removed - causing deployment issues
 ]
 
 MIDDLEWARE = [

@@ -119,7 +119,7 @@ farm-management-system/
 ├── bookings/                # Booking management app
 ├── inventory/               # Inventory management app
 ├── vendors/                 # Vendor management app
-├── chatbotapi/              # Chatbot API app
+# ├── chatbotapi/              # Chatbot API app (removed)
 ├── media/                   # Media files
 ├── staticfiles/             # Static files
 ├── templates/               # HTML templates
