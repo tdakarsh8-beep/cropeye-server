@@ -516,3 +516,4 @@ development_*
 .env.hosted
 .env.render
 .env.local.backup*
+env.example
