@@ -15,7 +15,15 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-this-in-produc
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# Allow Render URLs automatically + environment override
+allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '*.onrender.com,localhost,127.0.0.1')
+ALLOWED_HOSTS = allowed_hosts_env.split(',')
+
+# Add common Render URL patterns if not already included
+render_patterns = ['*.onrender.com', 'cropeye-server-1.onrender.com']
+for pattern in render_patterns:
+    if pattern not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(pattern)
 
 # Application definition
 INSTALLED_APPS = [
