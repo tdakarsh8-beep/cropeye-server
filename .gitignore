@@ -203,7 +203,7 @@ field.log
 soil.log
 
 # Model files (large files)
-model/
+# model/ - Commented out to include LLM model in deployment
 *.gguf
 *.bin
 *.safetensors
@@ -437,7 +437,7 @@ field.log
 soil.log
 
 # Model files
-model/
+# model/ - Commented out to include LLM model in deployment
 *.gguf
 *.bin
 *.safetensors
