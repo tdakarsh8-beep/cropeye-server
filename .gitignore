@@ -511,3 +511,7 @@ development_*
 # Performance monitoring
 *.prof
 *.profile
+# Additional environment file protections
+.env.hosted
+.env.render
+.env.local.backup*
