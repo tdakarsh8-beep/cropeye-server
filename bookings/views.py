@@ -30,11 +30,12 @@ class BookingViewSet(viewsets.ModelViewSet):
         return BookingSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'destroy']:
+        action = getattr(self, 'action', 'list')
+        if action in ['create', 'destroy']:
             return [CanManageBookings()]
-        elif self.action in ['update', 'partial_update']:
+        elif action in ['update', 'partial_update']:
             return [CanManageBookings()]
-        elif self.action == 'update_status':
+        elif action == 'update_status':
             return [CanManageBookings()]
         return [CanViewBookings()]
 

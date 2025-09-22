@@ -27,9 +27,10 @@ class EquipmentViewSet(viewsets.ModelViewSet):
         return EquipmentSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'destroy']:
+        action = getattr(self, 'action', 'list')
+        if action in ['create', 'destroy']:
             return [CanManageEquipment()]
-        elif self.action in ['update', 'partial_update']:
+        elif action in ['update', 'partial_update']:
             return [CanManageEquipment()]
         return [CanViewEquipment()]
 
