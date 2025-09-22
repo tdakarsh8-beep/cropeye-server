@@ -35,9 +35,9 @@ class EquipmentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_super_admin or user.is_manager:
+        if user.is_superuser or user.has_role('owner') or user.has_role('manager'):
             return Equipment.objects.all()
-        elif user.is_technician:
+        elif user.has_role('fieldofficer'):
             return Equipment.objects.filter(
                 Q(assigned_to=user) | Q(status='available')
             )

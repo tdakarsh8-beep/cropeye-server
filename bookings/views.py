@@ -40,7 +40,7 @@ class BookingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_super_admin or user.is_manager:
+        if user.is_superuser or user.has_role('owner') or user.has_role('manager'):
             return Booking.objects.all()
         return Booking.objects.filter(
             Q(created_by=user) | Q(booking_type='public')
