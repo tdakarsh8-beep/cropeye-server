@@ -85,6 +85,7 @@ class FarmerDetailSerializer(UserSerializer):
                 'area_size_numeric': float(farm.area_size) if farm.area_size else None,
                 'spacing_a': float(farm.spacing_a) if farm.spacing_a else None,
                 'spacing_b': float(farm.spacing_b) if farm.spacing_b else None,
+                'plantation_date': farm.plantation_date.isoformat() if farm.plantation_date else None,
                 'plants_in_field': farm.plants_in_field,
                 'soil_type': {
                     'id': farm.soil_type.id,
@@ -156,6 +157,7 @@ class FarmerDetailSerializer(UserSerializer):
                     'plantation_type_display': farm.crop_type.get_plantation_type_display(),
                     'planting_method': farm.crop_type.planting_method,
                     'planting_method_display': farm.crop_type.get_planting_method_display(),
+                    'plantation_date': farm.plantation_date.isoformat() if farm.plantation_date else None,
                     'area_size': str(farm.area_size) if farm.area_size else None,
                     'soil_type': farm.soil_type.name if farm.soil_type else None
                 }
