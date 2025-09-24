@@ -216,12 +216,12 @@ LEAFLET_CONFIG = {
     'ATTRIBUTION': '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
 }
 
-# FastAPI Services URLs (Local development URLs for testing)
-EVENTS_API_URL = os.environ.get('EVENTS_API_URL', 'http://192.168.41.73:9000')
-SOIL_API_URL = os.environ.get('SOIL_API_URL', 'http://192.168.41.73:8002')
-ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'http://192.168.41.73:7031')
-ET_API_URL = os.environ.get('ET_API_URL', 'http://192.168.41.73:8009')
-FIELD_API_URL = os.environ.get('FIELD_API_URL', 'http://192.168.41.73:8003')
+# FastAPI Services URLs (Public tunnel URLs for hosted Django to sync with local FastAPI)
+EVENTS_API_URL = os.environ.get('EVENTS_API_URL', 'https://events-cropeye.loca.lt')
+SOIL_API_URL = os.environ.get('SOIL_API_URL', 'https://soil-cropeye.loca.lt')
+ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'https://admin-cropeye.loca.lt')
+ET_API_URL = os.environ.get('ET_API_URL', 'https://et-cropeye.loca.lt')
+FIELD_API_URL = os.environ.get('FIELD_API_URL', 'https://field-cropeye.loca.lt')
 
 # WhatsApp OTP Configuration (Twilio)
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')
