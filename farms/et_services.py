@@ -82,6 +82,12 @@ class ETSyncService:
             coords = [plot_instance.location.x, plot_instance.location.y, 0.0]
             plot_data["geometry"]["coordinates"] = coords
             plot_data["geometry"]["type"] = "Point"
+        else:
+            # No geometry data - provide a default structure
+            plot_data["geometry"] = {
+                "type": "Point",
+                "coordinates": [0.0, 0.0, 0.0]
+            }
         
         return plot_data
     

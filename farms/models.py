@@ -258,7 +258,7 @@ class Farm(models.Model):
 
     address       = models.TextField()
     area_size     = models.DecimalField(max_digits=10, decimal_places=2,
-                                        help_text="Size in hectares")
+                                        help_text="Size in acres")
     soil_type     = models.ForeignKey(
         SoilType,
         on_delete=models.SET_NULL,
@@ -314,17 +314,19 @@ class Farm(models.Model):
     def plants_in_field(self):
         """
         Calculate number of plants in field using formula:
-        (total area / spacing_a) * spacing_b
+        total area * 43560 / (spacing_a * spacing_b)
+        where spacing_a and spacing_b are used as-is without unit conversion
         """
         if not self.spacing_a or not self.spacing_b or not self.area_size:
             return None
         
         try:
-            # Convert area_size from hectares to square meters
-            area_sq_m = float(self.area_size) * 10000  # 1 hectare = 10000 sq meters
+            # Convert area_size from acres to square feet
+            area_sq_ft = float(self.area_size) * 43560  # 1 acre = 43560 sq feet
             
-            # Calculate plants using formula: (total area / spacing_a) * spacing_b
-            plants = (area_sq_m / float(self.spacing_a)) * float(self.spacing_b)
+            # Calculate plants using formula: total area * 43560 / (spacing_a * spacing_b)
+            # spacing_a and spacing_b are used as-is without any unit conversion
+            plants = area_sq_ft / (float(self.spacing_a) * float(self.spacing_b))
             return int(plants)
         except (ValueError, ZeroDivisionError, TypeError):
             return None

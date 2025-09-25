@@ -222,7 +222,10 @@ EVENTS_API_URL = os.environ.get('EVENTS_API_URL', 'http://localhost:9000')
 SOIL_API_URL = os.environ.get('SOIL_API_URL', 'http://localhost:8002')  # soil.py
 ADMIN_API_URL = os.environ.get('ADMIN_API_URL', 'http://localhost:7031')  # Admin.py
 ET_API_URL = os.environ.get('ET_API_URL', 'http://localhost:8009')    # ET.py
-FIELD_API_URL = os.environ.get('FIELD_API_URL', 'http://localhost:7002') # field.py
+FIELD_API_URL = os.environ.get('FIELD_API_URL', 'http://localhost:8003')  # field.py
+
+# Hosted Render backend URL for plot fetching
+HOSTED_BACKEND_URL = os.environ.get('HOSTED_BACKEND_URL', 'https://cropeye-server-1.onrender.com')
 
 # WhatsApp OTP Configuration (Twilio)
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID', '')

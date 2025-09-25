@@ -190,7 +190,7 @@ class FarmerDetailSerializer(UserSerializer):
             'total_plots': total_plots,
             'total_farms': total_farms,
             'total_irrigations': total_irrigations,
-            'total_area_hectares': round(total_area, 2),
+            'total_area_acres': round(total_area, 2),
             'irrigation_types': list(irrigation_types),
             'crop_types': list(crop_types),
             'plots_with_boundaries': obj.plots.filter(boundary__isnull=False).count(),

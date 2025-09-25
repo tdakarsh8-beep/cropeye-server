@@ -130,11 +130,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         if (spacingA > 0 && spacingB > 0 && areaSize > 0) {
-            // Convert area from hectares to square meters
-            const areaSqM = areaSize * 10000;
+            // Convert area from acres to square feet
+            const areaSqFt = areaSize * 43560;
             
-            // Calculate plants using formula: (total area / spacing_a) * spacing_b
-            const plants = Math.floor((areaSqM / spacingA) * spacingB);
+            // Calculate plants using formula: total area * 43560 / (spacing_a * spacing_b)
+            // spacing_a and spacing_b are used as-is without any unit conversion
+            const plants = Math.floor(areaSqFt / (spacingA * spacingB));
             
             plantsCalculation.textContent = `${plants.toLocaleString()} plants`;
             plantsCalculation.style.backgroundColor = '#e8f5e8';
@@ -629,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .addTo(farmsMap)
                     .bindPopup(`
                         <strong>${farm.name}</strong><br>
-                        Area: ${farm.area_size} ha<br>
+                        Area: ${farm.area_size} acres<br>
                         <button class="popup-view-btn" data-id="${farm.id}">View Details</button>
                     `);
                 

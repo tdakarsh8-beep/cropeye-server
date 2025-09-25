@@ -386,7 +386,7 @@ GET /farms/recent-farmers/
 - **Plantation Type**: Seasonal classification (Adsali, Suru, Ratoon, Pre-Seasonal, Post-Seasonal)
 - **Planting Method**: Cultivation technique (3 Bud Method, 2 Bud Method, 1 Bud Method, etc.)
 - **Soil Type**: Soil classification (Loamy, Clay, Sandy, etc.)
-- **Farm Area**: Size in hectares
+- **Farm Area**: Size in acres
 - **Installation Date**: When irrigation was installed (plantation date reference)
 
 **💧 Irrigation System Details**:
@@ -926,7 +926,7 @@ POST /api/farms/quick-farmer-registration/ # Farmer only
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `address` | string | ✅ | Farm address |
-| `area_size` | string | ✅ | Area in hectares |
+| `area_size` | string | ✅ | Area in acres |
 | `spacing_a` | string | ❌ | **Spacing A in meters (between rows)** |
 | `spacing_b` | string | ❌ | **Spacing B in meters (between plants)** |
 | `soil_type_name` | string | ❌ | Soil type name |
@@ -1041,7 +1041,7 @@ POST /api/farms/quick-farmer-registration/ # Farmer only
 
 **Key Features**:
 - ✅ **Spacing Fields**: `spacing_a` and `spacing_b` for plant calculation
-- ✅ **Automatic Plant Calculation**: Formula: `(area_size_hectares * 10000 / spacing_a) * spacing_b`
+- ✅ **Automatic Plant Calculation**: Formula: `(area_size_acres * 43560) / (spacing_a * spacing_b)` where spacing values are used as-is without unit conversion
 - ✅ **Updated Irrigation**: Removed obsolete fields, added proper drip/flood fields
 - ✅ **Complete Registration**: Farmer + Plot + Farm + Irrigation in one API call
 - ✅ **Atomic Transaction**: All-or-nothing operation
@@ -2301,7 +2301,7 @@ This API now serves as the **single source of truth** for farmers to access all 
 │                    │ • Farm Details                                     │ │
 │                    │   - Unique Farm UID                                │ │
 │                    │   - Address                                        │ │
-│                    │   - Area Size (hectares)                           │ │
+│                    │   - Area Size (acres)                              │ │
 │                    │ • Agricultural Data                                │ │
 │                    │   - Soil Type (Loamy, Clay, Sandy, etc.)           │ │
 │                    │   - Crop Type (Sugarcane, Rice, Wheat, etc.)       │ │
