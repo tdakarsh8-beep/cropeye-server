@@ -9,6 +9,8 @@ class HasRolePermission(BasePermission):
     roles = []
 
     def has_permission(self, request, view):
+        if not request or not request.user:
+            return False
         user = request.user
         return user.is_authenticated and (
             user.is_superuser or user.has_any_role(self.roles)
@@ -16,7 +18,7 @@ class HasRolePermission(BasePermission):
 
 
 class CanManageTasks(HasRolePermission):
-    roles = ['admin', 'manager']
+    roles = ['admin', 'manager', 'fieldofficer', 'owner']
 
 
 class CanViewTasks(HasRolePermission):

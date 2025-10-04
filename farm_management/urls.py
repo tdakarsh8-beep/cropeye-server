@@ -38,7 +38,7 @@ urlpatterns = [
     path('api/', include('vendors.urls')),
     path('api/', include('farms.urls')),
     # path('api/', include('chatbotapi.urls')),  # Removed chatbot functionality
-    path('api/', include('tasks.urls')),
+    path('api/tasks/', include('tasks.urls')),
 
     # API Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
