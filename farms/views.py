@@ -4,12 +4,10 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.db import models
 from datetime import date, timedelta
-
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import ValidationError
-
 from .models import (
     SoilType,
     CropType,
@@ -37,7 +35,6 @@ from .serializers import (
 class IsOwnerOrAdminOrManager(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
-
         # Farm object
         if isinstance(obj, Farm):
             return (
@@ -46,7 +43,6 @@ class IsOwnerOrAdminOrManager(permissions.BasePermission):
                 or user.has_any_role(['admin', 'manager'])
                 or (user.has_role('fieldofficer') and obj.created_by == user)
             )
-
         # Anything linked to Farm
         if hasattr(obj, 'farm'):
             farm = obj.farm
@@ -56,7 +52,6 @@ class IsOwnerOrAdminOrManager(permissions.BasePermission):
                 or user.has_any_role(['admin', 'manager'])
                 or (user.has_role('fieldofficer') and farm.created_by == user)
             )
-
         return False
 
 
@@ -126,8 +121,8 @@ class FarmViewSet(viewsets.ModelViewSet):
                 user_loc = Point(lng, lat, srid=4326)
                 qs = (
                     qs.filter(plot__location__distance_lte=(user_loc, D(km=km)))
-                      .annotate(distance=Distance('plot__location', user_loc))
-                      .order_by('distance')
+                    .annotate(distance=Distance('plot__location', user_loc))
+                    .order_by('distance')
                 )
             except ValueError:
                 pass
@@ -135,8 +130,7 @@ class FarmViewSet(viewsets.ModelViewSet):
         # text search
         if search := self.request.query_params.get('search'):
             qs = qs.filter(
-                Q(address__icontains=search)
-                | Q(farm_owner__username__icontains=search)
+                Q(address__icontains=search) | Q(farm_owner__username__icontains=search)
             )
 
         # field officer sees farms they created
@@ -148,9 +142,11 @@ class FarmViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         data = self.request.data
+
         # field officer must assign farm_owner
         if user.has_role('fieldofficer') and not data.get('farm_owner'):
             raise ValidationError("Field Officer must assign a farm_owner.")
+
         serializer.save(created_by=user)
 
     def perform_update(self, serializer):
@@ -164,36 +160,34 @@ class FarmViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         serializer = self.get_serializer_class()(queryset, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'], url_path='recent-farmers')
     def recent_farmers(self, request):
         """Get all farmers created by the field officer with their plot details"""
         user = request.user
-        
         if not user.has_role('fieldofficer'):
             return Response({'error': 'Only field officers can access this endpoint'}, status=403)
-        
+
         try:
             from django.contrib.auth import get_user_model
             from django.contrib.auth.models import User as AuthUser
-            
             User = get_user_model()
-            
+
             # Get all farmers created by this field officer
             farmers = User.objects.filter(
                 created_by=user,
                 role__name='farmer'
             ).select_related('role').order_by('-date_joined')
-            
+
             def serialize_farmer_with_plots(farmer):
                 """Serialize farmer with their plot details"""
                 if not farmer:
                     return None
-                
+
                 # Get all plots for this farmer
                 plots = Plot.objects.filter(farmer=farmer).select_related('farmer', 'created_by')
-                
                 plot_data = []
+
                 for plot in plots:
                     # Generate the same plot ID format used by FastAPI services
                     def generate_fastapi_plot_id(plot_instance):
@@ -204,13 +198,13 @@ class FarmViewSet(viewsets.ModelViewSet):
                             return plot_instance.gat_number
                         else:
                             return f"plot_{plot_instance.id}"
-                    
+
                     fastapi_plot_id = generate_fastapi_plot_id(plot)
-                    
+
                     # Get farm details for this plot
                     farms = plot.farms.all().select_related('crop_type', 'soil_type').prefetch_related('irrigations__irrigation_type')
                     farm_details = []
-                    
+
                     for farm in farms:
                         # Get irrigation details
                         irrigation_details = []
@@ -226,7 +220,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                                 'distance_motor_to_plot_m': irrigation.distance_motor_to_plot_m
                             }
                             irrigation_details.append(irrigation_info)
-                        
+
                         farm_info = {
                             'farm_uid': str(farm.farm_uid),
                             'address': farm.address,
@@ -244,10 +238,10 @@ class FarmViewSet(viewsets.ModelViewSet):
                             'irrigations_count': len(irrigation_details)
                         }
                         farm_details.append(farm_info)
-                    
+
                     plot_info = {
-                        'id': plot.id,  # Django database ID
-                        'fastapi_plot_id': fastapi_plot_id,  # FastAPI services plot ID 
+                        'id': plot.id,
+                        'fastapi_plot_id': fastapi_plot_id,
                         'gat_number': plot.gat_number,
                         'plot_number': plot.plot_number,
                         'village': plot.village,
@@ -270,7 +264,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                         'farms_count': len(farm_details)
                     }
                     plot_data.append(plot_info)
-                
+
                 # Farmer basic info
                 farmer_data = {
                     'id': farmer.id,
@@ -293,37 +287,36 @@ class FarmViewSet(viewsets.ModelViewSet):
                     'plots': plot_data,
                     'plots_count': len(plot_data)
                 }
-                
+
                 return farmer_data
-            
+
             # Serialize farmers with plot details
             farmers_data = [serialize_farmer_with_plots(farmer) for farmer in farmers]
-            
+
             return Response({
                 'farmers': farmers_data,
                 'count': farmers.count()
             })
-            
+
         except Exception as e:
             return Response({'error': str(e)}, status=500)
-    
+
     @action(detail=False, methods=['post'], url_path='register-farmer')
     def register_farmer(self, request):
         """
         Complete farmer registration endpoint - creates farmer, plot, farm, and irrigation in one call
-        
         Expected JSON structure:
         {
             "farmer": {
                 "username": "farmer123",
-                "email": "farmer@example.com", 
+                "email": "farmer@example.com",
                 "password": "password123",
                 "first_name": "John",
                 "last_name": "Doe",
                 "phone_number": "9876543210",
                 "address": "Village Address",
                 "village": "Village Name",
-                "district": "District Name", 
+                "district": "District Name",
                 "state": "State Name",
                 "taluka": "Taluka Name"
             },
@@ -357,27 +350,31 @@ class FarmViewSet(viewsets.ModelViewSet):
         }
         """
         user = request.user
-        
+
         # Check if user is field officer
         if not user.has_role('fieldofficer'):
             return Response(
-                {'error': 'Only field officers can register farmers'}, 
+                {'error': 'Only field officers can register farmers'},
                 status=403
             )
-        
+
         try:
             from .farmer_registration_service import CompleteFarmerRegistrationService
-            
+
             # Perform complete registration
             result = CompleteFarmerRegistrationService.register_complete_farmer(
-                request.data, user
+                request.data,
+                user
             )
-            
+
             # Get detailed summary
             summary = CompleteFarmerRegistrationService.get_registration_summary(
-                result['farmer'], result['plot'], result['farm'], result['irrigation']
+                result['farmer'],
+                result['plot'],
+                result['farm'],
+                result['irrigation']
             )
-            
+
             return Response({
                 'success': True,
                 'message': result['message'],
@@ -389,23 +386,22 @@ class FarmViewSet(viewsets.ModelViewSet):
                     'irrigation_id': result['irrigation'].id if result['irrigation'] else None,
                 }
             }, status=201)
-            
+
         except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=400)
-    
+
     @action(detail=False, methods=['post'], url_path='quick-farmer-registration')
     def quick_farmer_registration(self, request):
         """
         Quick farmer registration - creates only farmer (simplified version)
-        
         Expected JSON structure:
         {
             "username": "farmer123",
             "email": "farmer@example.com",
-            "password": "password123", 
+            "password": "password123",
             "first_name": "John",
             "last_name": "Doe",
             "phone_number": "9876543210",
@@ -417,40 +413,40 @@ class FarmViewSet(viewsets.ModelViewSet):
         }
         """
         user = request.user
-        
+
         # Check if user is field officer
         if not user.has_role('fieldofficer'):
             return Response(
-                {'error': 'Only field officers can register farmers'}, 
+                {'error': 'Only field officers can register farmers'},
                 status=403
             )
-        
+
         try:
             from .farmer_registration_service import CompleteFarmerRegistrationService
-            
+
             # Create farmer only
             farmer_data = request.data
             farmer = CompleteFarmerRegistrationService._create_farmer(farmer_data)
-            
+
             from users.serializers import UserSerializer
+
             return Response({
                 'success': True,
                 'message': 'Farmer registered successfully',
                 'farmer': UserSerializer(farmer).data,
                 'farmer_id': farmer.id
             }, status=201)
-            
+
         except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=400)
-    
+
     @action(detail=False, methods=['post'], url_path='sync-plots-to-apis')
     def sync_plots_to_apis(self, request):
         """
         Manually sync plots to all FastAPI services
-        
         Expected JSON:
         {
             "plot_ids": [1, 2, 3],  // Optional: specific plot IDs
@@ -458,25 +454,26 @@ class FarmViewSet(viewsets.ModelViewSet):
         }
         """
         user = request.user
-        
+
         # Check if user is field officer or admin
         if not user.has_any_role(['fieldofficer', 'admin', 'manager']):
             return Response(
-                {'error': 'Only field officers, admins, or managers can sync plots'}, 
+                {'error': 'Only field officers, admins, or managers can sync plots'},
                 status=403
             )
-        
+
         try:
             from .farmer_registration_service import CompleteFarmerRegistrationService
             from .models import Plot
-            
+
             data = request.data
             plots_to_sync = []
-            
+
             if data.get('plot_ids'):
                 # Sync specific plots
                 plot_ids = data['plot_ids']
                 plots_to_sync = Plot.objects.filter(id__in=plot_ids)
+
                 if len(plots_to_sync) != len(plot_ids):
                     found_ids = list(plots_to_sync.values_list('id', flat=True))
                     missing_ids = [pid for pid in plot_ids if pid not in found_ids]
@@ -484,17 +481,16 @@ class FarmViewSet(viewsets.ModelViewSet):
                         'success': False,
                         'error': f'Plots not found: {missing_ids}'
                     }, status=400)
-                    
+
             elif data.get('sync_all'):
                 # Sync all plots
                 plots_to_sync = Plot.objects.all()
-                
             else:
                 return Response({
                     'success': False,
                     'error': 'Either provide plot_ids or set sync_all=true'
                 }, status=400)
-            
+
             # Perform sync
             sync_summary = {
                 'total_plots': len(plots_to_sync),
@@ -502,11 +498,11 @@ class FarmViewSet(viewsets.ModelViewSet):
                 'failed_syncs': 0,
                 'plot_results': []
             }
-            
+
             for plot in plots_to_sync:
                 try:
                     sync_results = CompleteFarmerRegistrationService._sync_plot_to_fastapi_services(plot)
-                    
+
                     plot_result = {
                         'plot_id': plot.id,
                         'gat_number': plot.gat_number,
@@ -515,11 +511,11 @@ class FarmViewSet(viewsets.ModelViewSet):
                         'success_count': len(sync_results['successful']),
                         'failure_count': len(sync_results['failed'])
                     }
-                    
+
                     sync_summary['successful_syncs'] += len(sync_results['successful'])
                     sync_summary['failed_syncs'] += len(sync_results['failed'])
                     sync_summary['plot_results'].append(plot_result)
-                    
+
                 except Exception as e:
                     plot_result = {
                         'plot_id': plot.id,
@@ -530,84 +526,82 @@ class FarmViewSet(viewsets.ModelViewSet):
                     }
                     sync_summary['failed_syncs'] += 5
                     sync_summary['plot_results'].append(plot_result)
-            
+
             return Response({
                 'success': True,
                 'message': f'Sync completed for {len(plots_to_sync)} plots',
                 'sync_summary': sync_summary
             }, status=200)
-            
+
         except Exception as e:
             return Response({
                 'success': False,
                 'error': str(e)
             }, status=400)
-    
+
     @action(detail=False, methods=['get'], url_path='my-farmers')
     def my_farmers(self, request):
         """
         Get all farmers registered by the currently logged-in field officer
-        
         Returns farmers with their associated plots, farms, and irrigation data
         """
         user = request.user
-        
+
         # Check if user is field officer
         if not user.has_role('fieldofficer'):
             return Response(
-                {'error': 'Only field officers can access this endpoint'}, 
+                {'error': 'Only field officers can access this endpoint'},
                 status=403
             )
-        
+
         try:
             from .models import Plot, Farm
             from users.serializers import UserSerializer
             from django.contrib.auth import get_user_model
-            
             User = get_user_model()
-            
+
             # Find all farmers who have plots or farms created by this field officer
             farmers_via_plots = User.objects.filter(
                 plots__created_by=user
             ).distinct()
-            
+
             farmers_via_farms = User.objects.filter(
                 farms__created_by=user
             ).distinct()
-            
+
             # Combine and get unique farmers
             farmer_ids = set()
             for farmer in farmers_via_plots:
                 farmer_ids.add(farmer.id)
             for farmer in farmers_via_farms:
                 farmer_ids.add(farmer.id)
-            
+
             farmers = User.objects.filter(
                 id__in=farmer_ids,
                 role__name='farmer'
             ).order_by('-date_joined')
-            
+
             # Prepare detailed response with related data
             farmers_data = []
-            
+
             for farmer in farmers:
                 # Get plots created by this field officer for this farmer
                 plots = Plot.objects.filter(
                     farmer=farmer,
                     created_by=user
                 ).order_by('-created_at')
-                
+
                 # Get farms created by this field officer for this farmer
                 farms = Farm.objects.filter(
                     farm_owner=farmer,
                     created_by=user
                 ).order_by('-created_at')
-                
+
                 # Count total irrigations across all farms
                 total_irrigations = 0
                 for farm in farms:
                     total_irrigations += farm.irrigations.count()
-                
+
                 farmer_data = {
                     'farmer': UserSerializer(farmer).data,
                     'registration_summary': {
@@ -627,7 +621,8 @@ class FarmViewSet(viewsets.ModelViewSet):
                             'created_at': plot.created_at.strftime('%Y-%m-%d %H:%M:%S') if plot.created_at else None,
                             'has_location': bool(plot.location),
                             'has_boundary': bool(plot.boundary),
-                        } for plot in plots
+                        }
+                        for plot in plots
                     ],
                     'farms': [
                         {
@@ -641,17 +636,17 @@ class FarmViewSet(viewsets.ModelViewSet):
                             'planting_method': farm.crop_type.planting_method if farm.crop_type else None,
                             'created_at': farm.created_at.strftime('%Y-%m-%d %H:%M:%S') if farm.created_at else None,
                             'irrigations_count': farm.irrigations.count(),
-                        } for farm in farms
+                        }
+                        for farm in farms
                     ]
                 }
-                
                 farmers_data.append(farmer_data)
-            
+
             # Summary statistics
             total_plots = sum(farmer['registration_summary']['plots_count'] for farmer in farmers_data)
             total_farms = sum(farmer['registration_summary']['farms_count'] for farmer in farmers_data)
             total_irrigations = sum(farmer['registration_summary']['irrigations_count'] for farmer in farmers_data)
-            
+
             return Response({
                 'success': True,
                 'field_officer': {
@@ -667,7 +662,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                 },
                 'farmers': farmers_data
             }, status=200)
-            
+
         except Exception as e:
             return Response({
                 'success': False,
@@ -678,7 +673,6 @@ class FarmViewSet(viewsets.ModelViewSet):
     def my_profile(self, request):
         """
         Get complete farmer profile with all agricultural data
-        
         This endpoint is for farmers to fetch their complete profile including:
         - Personal details
         - All their plots with FastAPI plot IDs
@@ -687,19 +681,18 @@ class FarmViewSet(viewsets.ModelViewSet):
         - GPS coordinates and boundaries
         """
         user = request.user
-        
+
         # Check if user is a farmer
         if not user.has_role('farmer'):
             return Response({
                 'error': 'Only farmers can access this endpoint'
             }, status=403)
-        
+
         try:
             from .models import Plot, Farm
             from django.contrib.auth import get_user_model
-            
             User = get_user_model()
-            
+
             # Generate the same plot ID format used by FastAPI services
             def generate_fastapi_plot_id(plot_instance):
                 """Generate plot ID in the same format as FastAPI services"""
@@ -709,41 +702,41 @@ class FarmViewSet(viewsets.ModelViewSet):
                     return plot_instance.gat_number
                 else:
                     return f"plot_{plot_instance.id}"
-            
+
             # Get all plots owned by this farmer
             plots = Plot.objects.filter(farmer=user).select_related('farmer', 'created_by')
-            
             plot_data = []
+
             total_farms = 0
             total_irrigations = 0
             crop_types = set()
             plantation_types = set()
             irrigation_types = set()
-            
+
             for plot in plots:
                 fastapi_plot_id = generate_fastapi_plot_id(plot)
-                
+
                 # Get farm details for this plot
                 farms = plot.farms.all().select_related('crop_type', 'soil_type').prefetch_related('irrigations__irrigation_type')
                 farm_details = []
-                
+
                 for farm in farms:
                     total_farms += 1
-                    
+
                     # Collect statistics
                     if farm.crop_type and farm.crop_type.crop_type:
                         crop_types.add(farm.crop_type.crop_type)
                     if farm.crop_type and farm.crop_type.plantation_type:
                         plantation_types.add(farm.crop_type.get_plantation_type_display())
-                    
+
                     # Get irrigation details
                     irrigation_details = []
                     for irrigation in farm.irrigations.all():
                         total_irrigations += 1
-                        
+
                         if irrigation.irrigation_type:
                             irrigation_types.add(irrigation.irrigation_type.get_name_display())
-                        
+
                         irrigation_info = {
                             'id': irrigation.id,
                             'irrigation_type': irrigation.irrigation_type.get_name_display() if irrigation.irrigation_type else None,
@@ -762,7 +755,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                             'emitters_count': irrigation.emitters_count
                         }
                         irrigation_details.append(irrigation_info)
-                    
+
                     farm_info = {
                         'id': farm.id,
                         'farm_uid': str(farm.farm_uid),
@@ -810,10 +803,10 @@ class FarmViewSet(viewsets.ModelViewSet):
                         'irrigations_count': len(irrigation_details)
                     }
                     farm_details.append(farm_info)
-                
+
                 plot_info = {
-                    'id': plot.id,  # Django database ID
-                    'fastapi_plot_id': fastapi_plot_id,  # FastAPI services plot ID 
+                    'id': plot.id,
+                    'fastapi_plot_id': fastapi_plot_id,
                     'gat_number': plot.gat_number,
                     'plot_number': plot.plot_number,
                     'address': {
@@ -863,7 +856,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                     'farms_count': len(farm_details)
                 }
                 plot_data.append(plot_info)
-            
+
             # Farmer profile data
             farmer_profile = {
                 'id': user.id,
@@ -900,7 +893,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                     'display_name': user.role.display_name
                 } if user.role else None
             }
-            
+
             # Agricultural summary
             agricultural_summary = {
                 'total_plots': len(plot_data),
@@ -911,7 +904,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                 'irrigation_types': list(irrigation_types),
                 'total_farm_area': sum(float(farm['area_size']) for plot in plot_data for farm in plot['farms'] if farm['area_size'])
             }
-            
+
             return Response({
                 'success': True,
                 'farmer_profile': farmer_profile,
@@ -923,7 +916,7 @@ class FarmViewSet(viewsets.ModelViewSet):
                     'note': 'Use fastapi_plot_id for calling FastAPI analysis services'
                 }
             }, status=200)
-            
+
         except Exception as e:
             return Response({
                 'success': False,
@@ -981,13 +974,96 @@ class PlotViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[permissions.AllowAny])
     def public(self, request):
-        """Public endpoint for plots - no authentication required"""
-        # For public endpoint, get all plots without user filtering
-        queryset = Plot.objects.all().select_related('farmer', 'created_by')
-        serializer = self.get_serializer_class()(queryset, many=True)
+        """Public endpoint for plots with farm information - no authentication required"""
+        
+        # Get all plots with related data
+        queryset = Plot.objects.all().select_related(
+            'farmer', 
+            'created_by'
+        ).prefetch_related(
+            'farms__crop_type',
+            'farms__soil_type',
+            'farms__irrigations__irrigation_type',
+            'farms__farm_owner'
+        )
+        
+        # Apply optional filters
+        if gat_number := request.query_params.get('gat_number'):
+            queryset = queryset.filter(gat_number=gat_number)
+        
+        if village := request.query_params.get('village'):
+            queryset = queryset.filter(village__icontains=village)
+        
+        if district := request.query_params.get('district'):
+            queryset = queryset.filter(district__icontains=district)
+        
+        if state := request.query_params.get('state'):
+            queryset = queryset.filter(state__icontains=state)
+        
+        # Build response with farm information
+        plots_data = []
+        
+        for plot in queryset:
+            # Generate FastAPI plot ID
+            if plot.gat_number and plot.plot_number:
+                fastapi_plot_id = f"{plot.gat_number}_{plot.plot_number}"
+            elif plot.gat_number:
+                fastapi_plot_id = plot.gat_number
+            else:
+                fastapi_plot_id = f"plot_{plot.id}"
+            
+            # Get farms for this plot
+            farms = plot.farms.all()
+            farm_details = []
+            
+            for farm in farms:
+                farm_info = {
+                    'id': farm.id,
+                    'plantation_date': farm.plantation_date.isoformat() if farm.plantation_date else None,
+                    'plantation_type': farm.crop_type.get_plantation_type_display() if farm.crop_type and farm.crop_type.plantation_type else None,
+                    'plantation_type_code': farm.crop_type.plantation_type if farm.crop_type else None
+                }
+                farm_details.append(farm_info)
+            
+            plot_data = {
+                'id': plot.id,
+                'fastapi_plot_id': fastapi_plot_id,
+                'gat_number': plot.gat_number,
+                'plot_number': plot.plot_number,
+                'address': {
+                    'village': plot.village,
+                    'taluka': plot.taluka,
+                    'district': plot.district,
+                    'state': plot.state,
+                    'country': plot.country,
+                    'pin_code': plot.pin_code
+                },
+                'location': {
+                    'type': 'Point',
+                    'coordinates': [plot.location.x, plot.location.y] if plot.location else None,
+                    'latitude': plot.location.y if plot.location else None,
+                    'longitude': plot.location.x if plot.location else None
+                } if plot.location else None,
+                'boundary': {
+                    'type': 'Polygon',
+                    'coordinates': list(plot.boundary.coords) if plot.boundary else None,
+                    'has_boundary': bool(plot.boundary)
+                },
+                'farmer': {
+                    'id': plot.farmer.id,
+                    'username': plot.farmer.username,
+                    'full_name': f"{plot.farmer.first_name} {plot.farmer.last_name}".strip() or plot.farmer.username
+                } if plot.farmer else None,
+                'created_at': plot.created_at.isoformat() if plot.created_at else None,
+                'updated_at': plot.updated_at.isoformat() if plot.updated_at else None,
+                'farms': farm_details,
+                'farms_count': len(farm_details)
+            }
+            plots_data.append(plot_data)
+        
         return Response({
-            'count': queryset.count(),
-            'results': serializer.data
+            'count': len(plots_data),
+            'results': plots_data
         })
 
 
@@ -1010,6 +1086,7 @@ class FarmImageViewSet(viewsets.ModelViewSet):
 
         if sd := self.request.query_params.get('start_date'):
             qs = qs.filter(uploaded_at__date__gte=sd)
+
         if ed := self.request.query_params.get('end_date'):
             qs = qs.filter(uploaded_at__date__lte=ed)
 
@@ -1094,7 +1171,7 @@ class FarmIrrigationViewSet(viewsets.ModelViewSet):
         from .models import IrrigationType
         irrigation_types = IrrigationType.objects.all()
         result = {}
-        
+
         for irrigation_type in irrigation_types:
             count = self.get_queryset().filter(irrigation_type=irrigation_type).count()
             result[irrigation_type.name] = {
@@ -1102,7 +1179,5 @@ class FarmIrrigationViewSet(viewsets.ModelViewSet):
                 'count': count,
                 'description': irrigation_type.description
             }
-        
-        return Response(result)
 
-    # Note: Maintenance-related methods removed as last_maintenance field was removed in migration 0005
+        return Response(result)

@@ -28,7 +28,7 @@ class CropType(models.Model):
         ('3_bud',           '3 Bud Method'),
         ('2_bud',           '2 Bud Method'),
         ('1_bud',           '1 Bud Method'),
-        ('1_bud_SHP_Method','1 Bud (stip Method)'),
+        ('1_bud_stip_Method','1 Bud (stip Method)'),
         ('other',           'Other'),
     ]
 
