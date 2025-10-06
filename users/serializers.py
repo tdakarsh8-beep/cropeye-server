@@ -9,11 +9,12 @@ class PlotDetailSerializer(serializers.ModelSerializer):
     """Serializer for detailed plot information within nested responses."""
     location = serializers.SerializerMethodField()
     boundary = serializers.SerializerMethodField()
+    fastapi_plot_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Plot
         fields = [
-            'id', 'gat_number', 'plot_number', 'village', 'taluka', 'district', 'state',
+            'id', 'fastapi_plot_id', 'gat_number', 'plot_number', 'village', 'taluka', 'district', 'state',
             'location', 'boundary', 'created_at'
         ]
 
@@ -26,6 +27,15 @@ class PlotDetailSerializer(serializers.ModelSerializer):
         if obj.boundary:
             return {'type': 'Polygon', 'coordinates': obj.boundary.coords}
         return None
+
+    def get_fastapi_plot_id(self, obj):
+        """Generate plot ID in the same format as FastAPI services"""
+        if obj.gat_number and obj.plot_number:
+            return f"{obj.gat_number}_{obj.plot_number}"
+        elif obj.gat_number:
+            return obj.gat_number
+        else:
+            return f"plot_{obj.id}"
 
 class FarmerWithPlotsSerializer(serializers.ModelSerializer):
     """Serializer for a Farmer, including a list of their plots."""
