@@ -1,21 +1,37 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Role
-from farms.models import Plot
+from farms.models import Plot, Farm
 
 User = get_user_model()
+
+class FarmSummarySerializer(serializers.ModelSerializer):
+    """A lean serializer for farm details within a plot."""
+    plantation_type = serializers.CharField(source='crop_type.plantation_type', allow_null=True)
+    crop_type = serializers.CharField(source='crop_type.crop_type', allow_null=True)
+
+    class Meta:
+        model = Farm
+        fields = [
+            'id',
+            'farm_uid',
+            'area_size',
+            'crop_type',
+            'plantation_type',
+            'plantation_date'
+        ]
 
 class PlotDetailSerializer(serializers.ModelSerializer):
     """Serializer for detailed plot information within nested responses."""
     location = serializers.SerializerMethodField()
     boundary = serializers.SerializerMethodField()
     fastapi_plot_id = serializers.SerializerMethodField()
+    farms = FarmSummarySerializer(many=True, read_only=True)
 
     class Meta:
         model = Plot
         fields = [
-            'id', 'fastapi_plot_id', 'gat_number', 'plot_number', 'village', 'taluka', 'district', 'state',
-            'location', 'boundary', 'created_at'
+            'id', 'fastapi_plot_id', 'gat_number', 'plot_number', 'village', 'taluka', 'district', 'state', 'location', 'boundary', 'created_at', 'farms'
         ]
 
     def get_location(self, obj):
@@ -43,7 +59,7 @@ class FarmerWithPlotsSerializer(serializers.ModelSerializer):
     role = serializers.StringRelatedField()
 
     class Meta:
-        model = User
+        model = User 
         fields = [
             'id', 'username', 'first_name', 'last_name', 'email', 'phone_number',
             'village', 'district', 'role', 'plots'
@@ -53,7 +69,7 @@ class FarmerWithPlotsSerializer(serializers.ModelSerializer):
         # Prefetch related plots for performance
         super().__init__(*args, **kwargs)
         if 'context' in kwargs and 'request' in kwargs['context']:
-            self.Meta.model.objects.prefetch_related('plots')
+            self.Meta.model.objects.prefetch_related('plots__farms__crop_type')
 
 
 class RoleSerializer(serializers.ModelSerializer):
@@ -271,7 +287,7 @@ class FieldOfficerWithFarmersSerializer(serializers.ModelSerializer):
         farmers = User.objects.filter(
             created_by=obj,
             role__name='farmer'
-        ).prefetch_related('plots').order_by('first_name')
+        ).prefetch_related('plots__farms__crop_type').order_by('first_name')
         
         serializer = FarmerWithPlotsSerializer(farmers, many=True, context=self.context)
         return serializer.data
