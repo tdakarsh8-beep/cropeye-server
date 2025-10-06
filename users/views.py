@@ -11,7 +11,8 @@ import string
 from .models import Role
 from .serializers import (
     UserSerializer, 
-    UserCreateSerializer, 
+    UserCreateSerializer,
+    FieldOfficerWithFarmersSerializer,
     FieldOfficerSerializer,
     OwnerHierarchySerializer
 )
@@ -119,9 +120,34 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Get field officers created by the current manager
         """
+        manager = request.user
         field_officers = request.user.created_users.filter(role__name='fieldofficer')
-        serializer = FieldOfficerSerializer(field_officers, many=True)
-        return Response(serializer.data)
+        
+        # Calculate summary statistics
+        total_farmers = 0
+        total_plots = 0
+        for fo in field_officers:
+            farmers_under_fo = fo.created_users.filter(role__name='farmer')
+            total_farmers += farmers_under_fo.count()
+            for farmer in farmers_under_fo:
+                total_plots += farmer.plots.count()
+
+        serializer = FieldOfficerWithFarmersSerializer(field_officers, many=True, context={'request': request})
+        
+        return Response({
+            "manager": {
+                "id": manager.id,
+                "username": manager.username,
+                "first_name": manager.first_name,
+                "last_name": manager.last_name,
+            },
+            "summary": {
+                "total_field_officers": field_officers.count(),
+                "total_farmers": total_farmers,
+                "total_plots": total_plots,
+            },
+            "field_officers": serializer.data
+        })
     
     
     @action(detail=False, methods=['get'], url_path='owner-hierarchy')

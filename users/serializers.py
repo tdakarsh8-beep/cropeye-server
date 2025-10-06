@@ -1,8 +1,50 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from .models import Role
+from farms.models import Plot
 
 User = get_user_model()
+
+class PlotDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed plot information within nested responses."""
+    location = serializers.SerializerMethodField()
+    boundary = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Plot
+        fields = [
+            'id', 'gat_number', 'plot_number', 'village', 'taluka', 'district', 'state',
+            'location', 'boundary', 'created_at'
+        ]
+
+    def get_location(self, obj):
+        if obj.location:
+            return {'type': 'Point', 'coordinates': [obj.location.x, obj.location.y]}
+        return None
+
+    def get_boundary(self, obj):
+        if obj.boundary:
+            return {'type': 'Polygon', 'coordinates': obj.boundary.coords}
+        return None
+
+class FarmerWithPlotsSerializer(serializers.ModelSerializer):
+    """Serializer for a Farmer, including a list of their plots."""
+    plots = PlotDetailSerializer(many=True, read_only=True)
+    role = serializers.StringRelatedField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'email', 'phone_number',
+            'village', 'district', 'role', 'plots'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        # Prefetch related plots for performance
+        super().__init__(*args, **kwargs)
+        if 'context' in kwargs and 'request' in kwargs['context']:
+            self.Meta.model.objects.prefetch_related('plots')
+
 
 class RoleSerializer(serializers.ModelSerializer):
     class Meta:
@@ -197,35 +239,35 @@ class FarmerDetailSerializer(UserSerializer):
             'plots_with_locations': obj.plots.filter(location__isnull=False).count()
         }
 
-class FieldOfficerSerializer(UserSerializer):
-    role = RoleSerializer(read_only=True)
-    created_by = serializers.StringRelatedField(read_only=True)
-    
-    # Count of farmers, plots, and farms created by this field officer
-    farmers_count = serializers.SerializerMethodField()
-    plots_count = serializers.SerializerMethodField()
-    farms_count = serializers.SerializerMethodField()
-    
+class FieldOfficerWithFarmersSerializer(serializers.ModelSerializer):
+    """
+    Serializer for a Field Officer, including a nested list of their farmers and plots.
+    """
+    farmers = serializers.SerializerMethodField()
+    role = serializers.StringRelatedField()
+
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'first_name', 'last_name', 
-            'phone_number', 'address', 'village', 'taluka', 'district', 'state',
-            'role', 'created_by', 'created_at', 'updated_at',
-            'farmers_count', 'plots_count', 'farms_count'
+            'id', 'username', 'first_name', 'last_name', 'email', 'phone_number',
+            'role', 'farmers'
         ]
-        read_only_fields = ['created_at', 'updated_at']
-    
-    def get_farmers_count(self, obj):
-        return obj.created_users.filter(role__name='farmer').count()
-    
-    def get_plots_count(self, obj):
-        # This will be updated when we have the plots model
-        return 0
-    
-    def get_farms_count(self, obj):
-        # This will be updated when we have the farms model
-        return 0
+
+    def get_farmers(self, obj):
+        """
+        Get all farmers created by this field officer, serialized with their plots.
+        """
+        # We query for farmers who have this field officer as their creator.
+        farmers = User.objects.filter(
+            created_by=obj,
+            role__name='farmer'
+        ).prefetch_related('plots').order_by('first_name')
+        
+        serializer = FarmerWithPlotsSerializer(farmers, many=True, context=self.context)
+        return serializer.data
+
+class FieldOfficerSerializer(FieldOfficerWithFarmersSerializer):
+    pass
 
 class FarmerSerializer(UserSerializer):
     role = RoleSerializer(read_only=True)
