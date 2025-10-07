@@ -14,7 +14,8 @@ from .serializers import (
     UserCreateSerializer,
     FieldOfficerWithFarmersSerializer,
     FieldOfficerSerializer,
-    OwnerHierarchySerializer
+    OwnerHierarchySerializer,
+    ManagerHierarchySerializer
 )
 from .permissions import IsManager, IsOwner
 
@@ -24,19 +25,6 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
-    def get_permissions(self):
-        """
-        Override permissions for specific actions
-        """
-        if self.action == 'login':
-            permission_classes = [permissions.AllowAny]
-        elif self.action == 'create':
-            permission_classes = [IsManager]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        
-        return [permission() for permission in permission_classes]
     
     def get_serializer_class(self):
         if self.action == 'create':
@@ -90,8 +78,10 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=201, headers=headers)
     
     def get_permissions(self):
-        if self.action in ['create', 'my_field_officers']:
+        if self.action == 'create':
             return [IsManager()]
+        elif self.action == 'my_field_officers':
+            return [permissions.IsAuthenticated()] # Logic is handled inside the view
         elif self.action == 'owner_hierarchy':
             return [IsOwner()]
         elif self.action in ['send_otp', 'verify_otp']:
@@ -118,36 +108,52 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='my-field-officers')
     def my_field_officers(self, request):
         """
-        Get field officers created by the current manager
+        Get field officers.
+        - If logged in as a Manager, returns field officers created by that manager.
+        - If logged in as an Owner, returns all managers and their field officers.
         """
-        manager = request.user
-        field_officers = request.user.created_users.filter(role__name='fieldofficer')
-        
-        # Calculate summary statistics
-        total_farmers = 0
-        total_plots = 0
-        for fo in field_officers:
-            farmers_under_fo = fo.created_users.filter(role__name='farmer')
-            total_farmers += farmers_under_fo.count()
-            for farmer in farmers_under_fo:
-                total_plots += farmer.plots.count()
+        user = request.user
 
-        serializer = FieldOfficerWithFarmersSerializer(field_officers, many=True, context={'request': request})
-        
-        return Response({
-            "manager": {
-                "id": manager.id,
-                "username": manager.username,
-                "first_name": manager.first_name,
-                "last_name": manager.last_name,
-            },
-            "summary": {
-                "total_field_officers": field_officers.count(),
-                "total_farmers": total_farmers,
-                "total_plots": total_plots,
-            },
-            "field_officers": serializer.data
-        })
+        if user.has_role('manager'):
+            # Manager's view: their own field officers
+            field_officers = user.created_users.filter(role__name='fieldofficer')
+            
+            total_farmers = 0
+            total_plots = 0
+            for fo in field_officers:
+                farmers_under_fo = fo.created_users.filter(role__name='farmer')
+                total_farmers += farmers_under_fo.count()
+                for farmer in farmers_under_fo:
+                    total_plots += farmer.plots.count()
+
+            serializer = FieldOfficerWithFarmersSerializer(field_officers, many=True, context={'request': request})
+            
+            return Response({
+                "manager": {
+                    "id": user.id,
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                },
+                "summary": {
+                    "total_field_officers": field_officers.count(),
+                    "total_farmers": total_farmers,
+                    "total_plots": total_plots,
+                },
+                "field_officers": serializer.data
+            })
+
+        elif user.has_role('owner'):
+            # Owner's view: all managers and their hierarchies
+            managers = User.objects.filter(role__name='manager')
+            serializer = ManagerHierarchySerializer(managers, many=True)
+            return Response({
+                "owner_view": True,
+                "managers": serializer.data
+            })
+
+        else:
+            return Response({"error": "You do not have permission to access this endpoint."}, status=status.HTTP_403_FORBIDDEN)
     
     
     @action(detail=False, methods=['get'], url_path='owner-hierarchy')
