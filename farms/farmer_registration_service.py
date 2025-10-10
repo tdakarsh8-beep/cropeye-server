@@ -212,12 +212,13 @@ class CompleteFarmerRegistrationService:
             except CropType.DoesNotExist:
                 raise serializers.ValidationError(f"Crop type ID {farm_data['crop_type_id']} not found")
         elif farm_data.get('crop_type_name'):
+            # Use all relevant fields to find or create the crop type
             crop_type, _ = CropType.objects.get_or_create(
                 crop_type=farm_data['crop_type_name'],
-                defaults={
-                    'plantation_type': farm_data.get('plantation_type', 'other'),
-                    'planting_method': farm_data.get('planting_method', 'other')
-                }
+                plantation_type=farm_data.get('plantation_type', 'other'),
+                planting_method=farm_data.get('planting_method', 'other'),
+                # Defaults are now empty as all fields are used for lookup
+                defaults={}
             )
         
         # Create farm
