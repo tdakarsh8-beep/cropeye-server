@@ -158,13 +158,9 @@ class FarmIrrigationSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError("Distance from motor to plot is required for flood irrigation.")
                     
             elif irrigation_type_name == 'drip':
-                # Drip irrigation requires: plants_per_acre, flow_rate_lph, emitters_count
-                if not data.get('plants_per_acre'):
-                    raise serializers.ValidationError("Plants per acre is required for drip irrigation.")
-                if not data.get('flow_rate_lph'):
-                    raise serializers.ValidationError("Flow rate (L/hr) is required for drip irrigation.")
-                if not data.get('emitters_count'):
-                    raise serializers.ValidationError("Emitters count is required for drip irrigation.")
+                # Validation for drip irrigation fields is relaxed.
+                # The service layer handles the calculation for plants_per_acre if not provided.
+                pass
         
         return data
 

@@ -34,38 +34,47 @@ class CompleteFarmerRegistrationService:
         try:
             # Step 1: Create Farmer (User)
             farmer = CompleteFarmerRegistrationService._create_farmer(data.get('farmer', {}), field_officer)
-            
-            # Step 2: Create Plot (if provided)
-            plot = None
-            if data.get('plot'):
-                plot = CompleteFarmerRegistrationService._create_plot(
-                    data['plot'], farmer, field_officer
-                )
-            
-            # Step 3: Create Farm (if provided)
-            farm = None
-            if data.get('farm'):
-                farm = CompleteFarmerRegistrationService._create_farm(
-                    data['farm'], farmer, field_officer, plot
-                )
-            
-            # Step 4: Create Irrigation (if provided)
-            irrigation = None
-            if data.get('irrigation') and farm:
-                irrigation = CompleteFarmerRegistrationService._create_farm_irrigation(
-                    data['irrigation'], farm, field_officer
-                )
-            
-            # Manually sync plot to all FastAPI services after unified registration
-            if plot:
-                CompleteFarmerRegistrationService._sync_plot_to_fastapi_services(plot)
-            
+
+            # Handle multiple plots, farms, and irrigations
+            created_entities = []
+            plots_data = data.get('plots', [])
+
+            # Support single plot registration for backward compatibility
+            if 'plot' in data and not plots_data:
+                plots_data.append({
+                    'plot': data.get('plot'),
+                    'farm': data.get('farm'),
+                    'irrigation': data.get('irrigation')
+                })
+
+            for entity_data in plots_data:
+                plot = None
+                if entity_data.get('plot'):
+                    plot = CompleteFarmerRegistrationService._create_plot(
+                        entity_data['plot'], farmer, field_officer
+                    )
+
+                farm = None
+                if entity_data.get('farm') and plot:
+                    farm = CompleteFarmerRegistrationService._create_farm(
+                        entity_data['farm'], farmer, field_officer, plot
+                    )
+
+                irrigation = None
+                if entity_data.get('irrigation') and farm:
+                    irrigation = CompleteFarmerRegistrationService._create_farm_irrigation(
+                        entity_data['irrigation'], farm, field_officer, entity_data.get('farm', {})
+                    )
+                created_entities.append({'plot': plot, 'farm': farm, 'irrigation': irrigation})
+
+                # Manually sync each plot to all FastAPI services after unified registration
+                if plot:
+                    CompleteFarmerRegistrationService._sync_plot_to_fastapi_services(plot)
+
             return {
                 'success': True,
                 'farmer': farmer,
-                'plot': plot,
-                'farm': farm,
-                'irrigation': irrigation,
+                'created_entities': created_entities,
                 'message': 'Farmer registration completed successfully'
             }
             
@@ -239,7 +248,7 @@ class CompleteFarmerRegistrationService:
         return farm
     
     @staticmethod
-    def _create_farm_irrigation(irrigation_data, farm, field_officer):
+    def _create_farm_irrigation(irrigation_data, farm, field_officer, farm_data=None):
         """Create farm irrigation system"""
         if not irrigation_data:
             return None
@@ -258,6 +267,23 @@ class CompleteFarmerRegistrationService:
                 name=irrigation_data['irrigation_type_name'],
                 defaults={'description': f"Auto-created: {irrigation_data['irrigation_type_name']}"}
             )
+
+        # Calculate plants_per_acre for drip irrigation if spacing is available
+        plants_per_acre_val = irrigation_data.get('plants_per_acre')
+        if irrigation_type and irrigation_type.name.lower() == 'drip' and not plants_per_acre_val:
+            if farm_data and farm_data.get('spacing_a') and farm_data.get('spacing_b'):
+                try:
+                    spacing_a = float(farm_data['spacing_a'])
+                    spacing_b = float(farm_data['spacing_b'])
+                    # Assuming spacing is in feet. 1 acre = 43560 sq ft.
+                    # If spacing is in meters, conversion is needed: 1 meter = 3.28084 feet
+                    # For now, assuming feet as per standard agricultural practice in some regions.
+                    if spacing_a > 0 and spacing_b > 0:
+                        plants_per_acre_val = 43560 / (spacing_a * spacing_b)
+                        logger.info(f"Calculated plants_per_acre: {plants_per_acre_val} for farm {farm.id}")
+                except (ValueError, TypeError):
+                    logger.warning(f"Could not calculate plants_per_acre for farm {farm.id} due to invalid spacing values.")
+                    pass
         
         # Create irrigation with location (use farm plot location as default)
         irrigation_location = None
@@ -282,7 +308,7 @@ class CompleteFarmerRegistrationService:
             motor_horsepower=irrigation_data.get('motor_horsepower'),
             pipe_width_inches=irrigation_data.get('pipe_width_inches'),
             distance_motor_to_plot_m=irrigation_data.get('distance_motor_to_plot_m'),
-            plants_per_acre=irrigation_data.get('plants_per_acre'),
+            plants_per_acre=plants_per_acre_val,
             flow_rate_lph=irrigation_data.get('flow_rate_lph'),
             emitters_count=irrigation_data.get('emitters_count')
         )
@@ -293,11 +319,10 @@ class CompleteFarmerRegistrationService:
     @staticmethod
     def get_registration_summary(farmer, plot, farm, irrigation):
         """Get a summary of the complete registration"""
-        from users.serializers import UserSerializer
+        from users.serializers import UserSerializer # Keep this import
         from .serializers import PlotSerializer, FarmSerializer, FarmIrrigationSerializer
         
         summary = {
-            'farmer': UserSerializer(farmer).data if farmer else None,
             'plot': PlotSerializer(plot).data if plot else None,
             'farm': FarmSerializer(farm).data if farm else None,
             'irrigation': FarmIrrigationSerializer(irrigation).data if irrigation else None,

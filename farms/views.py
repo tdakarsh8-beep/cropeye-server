@@ -367,24 +367,29 @@ class FarmViewSet(viewsets.ModelViewSet):
                 user
             )
 
-            # Get detailed summary
-            summary = CompleteFarmerRegistrationService.get_registration_summary(
-                result['farmer'],
-                result['plot'],
-                result['farm'],
-                result['irrigation']
-            )
+            # Get detailed summary for all created entities
+            registration_summary = []
+            all_ids = {'farmer_id': result['farmer'].id, 'plots': []}
+
+            for entities in result.get('created_entities', []):
+                summary = CompleteFarmerRegistrationService.get_registration_summary(
+                    result['farmer'],
+                    entities.get('plot'),
+                    entities.get('farm'),
+                    entities.get('irrigation')
+                )
+                registration_summary.append(summary)
+                all_ids['plots'].append({
+                    'plot_id': entities['plot'].id if entities.get('plot') else None,
+                    'farm_id': entities['farm'].id if entities.get('farm') else None,
+                    'irrigation_id': entities['irrigation'].id if entities.get('irrigation') else None,
+                })
 
             return Response({
                 'success': True,
                 'message': result['message'],
-                'registration_summary': summary,
-                'ids': {
-                    'farmer_id': result['farmer'].id if result['farmer'] else None,
-                    'plot_id': result['plot'].id if result['plot'] else None,
-                    'farm_id': result['farm'].id if result['farm'] else None,
-                    'irrigation_id': result['irrigation'].id if result['irrigation'] else None,
-                }
+                'registration_summary': registration_summary,
+                'ids': all_ids
             }, status=201)
 
         except Exception as e:

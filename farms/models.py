@@ -369,14 +369,17 @@ class FarmIrrigation(models.Model):
                 if not self.distance_motor_to_plot_m:
                     raise ValidationError("Distance from motor to plot is required for flood irrigation.")
             elif name == 'drip':
-                if not self.plants_per_acre:
-                    raise ValidationError("Plants per acre is required for drip irrigation.")
-                if not self.flow_rate_lph:
-                    raise ValidationError("Flow rate (L/hr) is required for drip irrigation.")
-                if not self.emitters_count:
-                    raise ValidationError("Emitters count is required for drip irrigation.")
+                # These fields are now optional as they can be calculated or are not always required.
+                # We can keep some soft validation if needed, but for now, we'll relax it.
+                # For example, if flow_rate is given, emitters_count might be expected.
+                if self.flow_rate_lph and not self.emitters_count:
+                    # This is an example of a softer validation. For now, we remove the strict checks.
+                    pass
+                # The strict check for plants_per_acre is removed to allow for automatic calculation.
+
             elif name == 'sprinkler' and not self.pipe_width_inches:
                 raise ValidationError("Pipe width (inches) is required for sprinkler irrigation.")
+
         super().clean()
 
     def save(self, *args, **kwargs):
