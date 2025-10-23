@@ -21,6 +21,7 @@ RUN apt-get update \
         libgdal-dev \
         python3-gdal \
         binutils \
+        netcat-traditional \
         libproj-dev \
         curl \
     && rm -rf /var/lib/apt/lists/*
@@ -39,9 +40,6 @@ COPY . /app/
 # Create directories for media, static files, and logs
 RUN mkdir -p /app/media /app/staticfiles /app/logs
 
-# Make startup script executable
-RUN chmod +x /app/start.sh
-
 # Create a non-root user
 RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
@@ -55,4 +53,16 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/api/health/ || exit 1
 
 # Run the application
-CMD ["./start.sh"]
+CMD ["/bin/sh", "-c", "\
+    echo '🚀 Starting Django application...' && \
+    mkdir -p /app/logs && \
+    echo '⏳ Waiting for database connection...' && \
+    until nc -z -v -w30 \"${DB_HOST:-db}\" 5432; do \
+      echo \"Waiting for database at ${DB_HOST:-db}:5432...\"; \
+      sleep 2; \
+    done && \
+    echo '✅ Database is up and running!' && \
+    echo '📊 Applying database migrations...' && python manage.py migrate --noinput && \
+    echo '📁 Collecting static files...' && python manage.py collectstatic --noinput && \
+    echo '🌐 Starting Gunicorn server...' && exec gunicorn farm_management.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile - \
+"]

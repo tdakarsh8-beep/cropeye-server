@@ -5,35 +5,23 @@ set -e
 
 echo "🚀 Starting Django application..."
 
+# Create logs directory if it doesn't exist (important for volume mounts)
+mkdir -p /app/logs
+
 # Wait for database to be ready
 echo "⏳ Waiting for database connection..."
-# Skip Django check to avoid migration loading issues
-# python manage.py check --database default --deploy
+DB_HOST=${DB_HOST:-localhost} # Default to localhost if not set
+DB_PORT=${DB_PORT:-5432}     # Default to 5432 if not set
 
-# Create ALL database tables comprehensively (completely bypasses Django migrations)
-echo "📊 Creating ALL database tables comprehensively..."
-python create_all_tables.py || {
-    echo "❌ Comprehensive table creation failed, trying simpler approach..."
-    python create_tables_raw_sql.py || {
-        echo "❌ Raw SQL creation failed, trying Django approaches..."
-        python create_database_schema.py || {
-            echo "❌ Direct schema creation failed, trying migration approaches..."
-            python fix_users_migration.py || {
-                echo "❌ Users migration fix failed, trying other approaches..."
-                python create_initial_migration.py || {
-                    echo "❌ Initial migration creation failed, trying fallback..."
-                    python fix_migrations.py || {
-                        echo "❌ Migration fix script failed, trying manual approach..."
-                        python manage.py migrate --fake-initial --noinput || {
-                            echo "❌ All migration attempts failed!"
-                            exit 1
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
+until nc -z -v -w30 "$DB_HOST" "$DB_PORT"; do
+  echo "Waiting for database at $DB_HOST:$DB_PORT..."
+  sleep 5
+done
+echo "✅ Database is up and running!"
+
+# Apply database migrations. This is the standard and safe way.
+echo "📊 Applying database migrations..."
+python manage.py migrate --noinput
 
 # Collect static files
 echo "📁 Collecting static files..."
@@ -44,14 +32,14 @@ echo "👤 Checking for superuser..."
 python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
-if not User.objects.filter(is_superuser=True).exists():
+if not User.objects.filter(username='admin').exists():
     print('Creating superuser...')
     User.objects.create_superuser('admin', 'admin@example.com', 'admin123')
     print('Superuser created: admin/admin123')
 else:
     print('Superuser already exists')
-" || echo "⚠️ Superuser creation skipped"
+"
 
 # Start the application
 echo "🌐 Starting Gunicorn server..."
-exec gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --access-logfile - --error-logfile - farm_management.wsgi:application
+exec gunicorn farm_management.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -

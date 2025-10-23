@@ -135,9 +135,9 @@ static/
 *.log
 *.sqlite3
 
-# Django migrations (keep only initial migrations)
-*/migrations/0*.py
-!*/migrations/__init__.py
+# # Django migrations (keep only initial migrations)
+# */migrations/0*.py
+# !*/migrations/__init__.py
 
 # Django secret key and sensitive settings
 .env
@@ -214,10 +214,8 @@ model/
 !package-lock.json
 !requirements.txt
 !Pipfile
-!Pipfile.lock
 
 # Shell scripts
-*.sh
 !deploy.sh
 !start.sh
 !fix_migrations.py
@@ -226,6 +224,7 @@ model/
 !create_database_schema.py
 !create_tables_raw_sql.py
 !create_all_tables.py
+!entrypoint.sh
 
 # Locust testing files
 locustfile.py
@@ -260,8 +259,8 @@ Thumbs.db
 .railway/
 
 # Docker
-docker-compose.yml
-docker-compose.override.yml
+# docker-compose.yml
+# docker-compose.override.yml
 
 # SSL certificates
 *.pem
