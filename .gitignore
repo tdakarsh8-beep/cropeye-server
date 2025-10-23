@@ -102,6 +102,7 @@ celerybeat.pid
 .env.staging
 .env.save
 .env.local.backup
+render_env_template.txt
 .venv
 env/
 venv/
