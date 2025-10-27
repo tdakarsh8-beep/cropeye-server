@@ -55,7 +55,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v sudo docker compose &> /dev/null; then
     print_error "Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
@@ -77,10 +77,10 @@ chmod 755 staticfiles
 
 # Build and start services
 print_status "Building Docker images..."
-docker-compose build --no-cache
+sudo docker compose build --no-cache
 
 print_status "Starting services..."
-docker-compose up -d
+sudo docker compose up -d
 
 # Wait for services to be ready
 print_status "Waiting for services to be ready..."
@@ -88,19 +88,19 @@ sleep 30
 
 # Check if services are running
 print_status "Checking service status..."
-docker-compose ps
+sudo docker compose ps
 
 # Run database migrations
 print_status "Running database migrations..."
-docker-compose exec web python manage.py migrate
+sudo docker compose exec web python manage.py migrate
 
 # Collect static files
 print_status "Collecting static files..."
-docker-compose exec web python manage.py collectstatic --noinput
+sudo docker compose exec web python manage.py collectstatic --noinput
 
 # Create superuser (optional)
 print_status "Creating superuser..."
-docker-compose exec web python manage.py shell -c "
+sudo docker compose exec web python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
 if not User.objects.filter(username='admin').exists():
@@ -117,7 +117,7 @@ sleep 10
 if curl -f http://localhost:${WEB_PORT:-8000}/api/health/ > /dev/null 2>&1; then
     print_success "Application is responding successfully!"
 else
-    print_warning "Application health check failed. Check logs with: docker-compose logs web"
+    print_warning "Application health check failed. Check logs with: sudo docker compose logs web"
 fi
 
 # Display deployment information
@@ -133,18 +133,18 @@ echo "👤 Admin Credentials: admin / admin123"
 echo ""
 echo "📊 Service Status:"
 echo "=================="
-docker-compose ps
+sudo docker compose ps
 echo ""
 echo "📝 Useful Commands:"
 echo "==================="
-echo "View logs:           docker-compose logs -f"
-echo "View web logs:       docker-compose logs -f web"
-echo "View db logs:        docker-compose logs -f db"
-echo "Stop services:       docker-compose down"
-echo "Restart services:    docker-compose restart"
-echo "Update services:     docker-compose pull && docker-compose up -d"
-echo "Access shell:        docker-compose exec web bash"
-echo "Run migrations:      docker-compose exec web python manage.py migrate"
-echo "Create superuser:    docker-compose exec web python manage.py createsuperuser"
+echo "View logs:           sudo docker compose logs -f"
+echo "View web logs:       sudo docker compose logs -f web"
+echo "View db logs:        sudo docker compose logs -f db"
+echo "Stop services:       sudo docker compose down"
+echo "Restart services:    sudo docker compose restart"
+echo "Update services:     sudo docker compose pull && sudo docker compose up -d"
+echo "Access shell:        sudo docker compose exec web bash"
+echo "Run migrations:      sudo docker compose exec web python manage.py migrate"
+echo "Create superuser:    sudo docker compose exec web python manage.py createsuperuser"
 echo ""
 print_success "Deployment script completed!"

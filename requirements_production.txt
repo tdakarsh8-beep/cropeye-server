@@ -12,7 +12,7 @@ drf-nested-routers==0.93.4
 drf-yasg==1.21.7
 
 # Database
-psycopg2==2.9.10
+psycopg2-binary==2.9.10
 
 # Production server
 gunicorn==21.2.0
