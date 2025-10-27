@@ -5,20 +5,13 @@ databases:
     region: oregon
 
 services:
-  # ❌ Skip Redis (not free)
-  # You can re-enable it later by changing plan: starter
-  # - type: redis
-  #   name: farm-management-redis
-  #   plan: starter
-  #   maxmemoryPolicy: allkeys-lru
-  #   ipAllowList: []
-
   # ✅ Django Web Application
   - type: web
     name: farm-management-web
     env: docker
     plan: free
     dockerfilePath: ./Dockerfile
+    dockerCommand: "/bin/sh -c 'echo \"🚀 Starting Django application...\" && mkdir -p /app/logs && echo \"⏳ Waiting for database connection...\" && until nc -z -v -w30 \"${DB_HOST:-db}\" 5432; do echo \"Waiting for database at ${DB_HOST:-db}:5432...\"; sleep 2; done && echo \"✅ Database is up and running!\" && echo \"📊 Applying database migrations...\" && python manage.py migrate --noinput && echo \"📁 Collecting static files...\" && python manage.py collectstatic --noinput && echo \"🌐 Starting Gunicorn server...\" && exec gunicorn farm_management.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 --access-logfile - --error-logfile -'"
     envVars:
       - key: DEBUG
         value: False
