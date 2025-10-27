@@ -42,4 +42,4 @@ else:
 
 # Start the application
 echo "🌐 Starting Gunicorn server..."
-exec gunicorn farm_management.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -
+exec gunicorn farm_management.wsgi:application --bind 0.0.0.0:${PORT:-8000} --workers 3 --timeout 120 --access-logfile - --error-logfile -
