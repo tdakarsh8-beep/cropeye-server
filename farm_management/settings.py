@@ -235,3 +235,22 @@ TWILIO_WHATSAPP_NUMBER = os.environ.get('TWILIO_WHATSAPP_NUMBER', '')
 # OTP Configuration
 WHATSAPP_OTP_ENABLED = os.environ.get('WHATSAPP_OTP_ENABLED', 'True').lower() == 'true'
 EMAIL_OTP_FALLBACK = os.environ.get('EMAIL_OTP_FALLBACK', 'True').lower() == 'true'
+import os
+import dj_database_url
+
+DEBUG = False
+
+ALLOWED_HOSTS = ['*']
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Database (Render gives DATABASE_URL)
+DATABASES = {
+    'default': dj_database_url.config(default='sqlite:///db.sqlite3')
+}
+
