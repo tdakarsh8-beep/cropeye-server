@@ -1,1 +1,1 @@
-web: gunicorn cropeye_server.wsgi
+web: gunicorn farm_management.wsgi
