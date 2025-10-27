@@ -12,6 +12,10 @@ drf-nested-routers==0.93.4
 drf-yasg==1.21.7
 inflection==0.5.1
 Jinja2==3.1.6
+gunicorn
+psycopg2-binary
+whitenoise
+dj-database-url
 
 MarkupSafe==3.0.2
 numpy==2.2.4
